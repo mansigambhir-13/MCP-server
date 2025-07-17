@@ -1,0 +1,378 @@
+﻿openapi: 3.0.3
+info:
+  title: MCP Server API
+  description: Model Context Protocol Server for text processing
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the server
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+
+  /v1/summarize:
+    post:
+      summary: Summarize text
+      description: Generate a summary of the provided text
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummarizeRequest'
+            example:
+              requestId: "123e4567-e89b-12d3-a456-426614174000"
+              text: "This is a long text that needs to be summarized. It contains multiple sentences and paragraphs that describe various topics and concepts."
+              options:
+                maxSentences: 2
+      responses:
+        '200':
+          description: Successful summarization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummarizeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/keywords:
+    post:
+      summary: Extract keywords
+      description: Extract important keywords from the provided text
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeywordRequest'
+            example:
+              requestId: "123e4567-e89b-12d3-a456-426614174001"
+              text: "Machine learning and artificial intelligence are transforming the technology industry with innovative solutions."
+              options:
+                topN: 5
+      responses:
+        '200':
+          description: Successful keyword extraction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeywordResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/sentiment:
+    post:
+      summary: Analyze sentiment
+      description: Analyze the sentiment of the provided text
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SentimentRequest'
+            example:
+              requestId: "123e4567-e89b-12d3-a456-426614174002"
+              text: "I love this product! It's amazing and works perfectly."
+              options: {}
+      responses:
+        '200':
+          description: Successful sentiment analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SentimentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key for authentication
+
+  schemas:
+    BaseRequest:
+      type: object
+      required:
+        - requestId
+        - text
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: UUID for request tracing
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        text:
+          type: string
+          maxLength: 10485760  # 10MB
+          description: Text to process (up to 10MB)
+          example: "This is sample text to process."
+        options:
+          type: object
+          description: Tool-specific options
+          additionalProperties: true
+
+    SummarizeRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseRequest'
+        - type: object
+          properties:
+            options:
+              type: object
+              properties:
+                maxSentences:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 3
+                  description: Maximum number of sentences in the summary
+
+    KeywordRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseRequest'
+        - type: object
+          properties:
+            options:
+              type: object
+              properties:
+                topN:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 10
+                  description: Number of top keywords to return
+
+    SentimentRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseRequest'
+        - type: object
+          properties:
+            options:
+              type: object
+              description: No specific options for sentiment analysis
+
+    BaseResponse:
+      type: object
+      required:
+        - requestId
+        - tool
+        - durationMs
+        - result
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: Echoed request ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        tool:
+          type: string
+          enum: [Summarize, ExtractKeywords, Sentiment]
+          description: Tool that processed the request
+        durationMs:
+          type: integer
+          minimum: 0
+          description: Processing time in milliseconds
+          example: 250
+        result:
+          type: object
+          description: Tool-specific result
+
+    SummarizeResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tool:
+              type: string
+              enum: [Summarize]
+            result:
+              type: object
+              required:
+                - summary
+              properties:
+                summary:
+                  type: string
+                  description: Generated summary
+                  example: "This is a concise summary of the provided text."
+
+    KeywordResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tool:
+              type: string
+              enum: [ExtractKeywords]
+            result:
+              type: object
+              required:
+                - keywords
+              properties:
+                keywords:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - term
+                      - score
+                    properties:
+                      term:
+                        type: string
+                        description: Extracted keyword
+                        example: "technology"
+                      score:
+                        type: number
+                        minimum: 0
+                        maximum: 1
+                        description: Relevance score
+                        example: 0.85
+
+    SentimentResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tool:
+              type: string
+              enum: [Sentiment]
+            result:
+              type: object
+              required:
+                - label
+              properties:
+                label:
+                  type: string
+                  enum: [positive, negative, neutral]
+                  description: Sentiment classification
+                  example: "positive"
+
+    ErrorResponse:
+      type: object
+      required:
+        - requestId
+        - error
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: Request ID that caused the error
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code
+              example: "400"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Invalid JSON format"
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid JSON or missing fields
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            requestId: "123e4567-e89b-12d3-a456-426614174000"
+            error:
+              code: "400"
+              message: "Invalid JSON format"
+
+    Unauthorized:
+      description: Unauthorized - missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            requestId: "123e4567-e89b-12d3-a456-426614174000"
+            error:
+              code: "401"
+              message: "Invalid or missing API key"
+
+    PayloadTooLarge:
+      description: Payload too large - text exceeds 10MB limit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            requestId: "123e4567-e89b-12d3-a456-426614174000"
+            error:
+              code: "413"
+              message: "Text size exceeds maximum 10MB"
+
+    InternalServerError:
+      description: Internal server error - unexpected failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            requestId: "123e4567-e89b-12d3-a456-426614174000"
+            error:
+              code: "500"
+              message: "Internal server error"
