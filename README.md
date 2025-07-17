@@ -8,6 +8,10 @@ This server provides three NLP processing endpoints:
 - **Extract Keywords**: Identify important keywords with relevance scores  
 - **Sentiment Analysis**: Classify text sentiment as positive, negative, or neutral
 
+- ## workflow
+- <img width="2052" height="2565" alt="_- visual selection" src="https://github.com/user-attachments/assets/fc405cc8-03e6-4fe7-a6b4-785f14ad09f0" />
+
+
 ## Quick Start
 
 ### 1. Setup Environment
