@@ -52,8 +52,6 @@ kko
 
 </div>
 
-## Flowchart 
-<img width="2052" height="2565" alt="_- visual selection" src="https://github.com/user-attachments/assets/3cc71dba-928b-4b91-80fb-9cfb110979cf" />
 
 
 ### 🎯 Core Capabilities
