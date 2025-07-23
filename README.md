@@ -713,14 +713,4 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-### 🚀 **Ready to transform your text processing workflow?**
 
-**[Get Started Now](#-quick-start)** • **[View API Docs](http://localhost:8000/docs)** • **[Join Discord](https://discord.gg/your-server)**
-
----
-
-**Built with ❤️ by [Your Name](https://github.com/yourusername)**
-
-*MCP Server - Professional Text Processing Made Simple*
-
-</div>
